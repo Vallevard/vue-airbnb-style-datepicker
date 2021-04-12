@@ -1,5 +1,5 @@
 <template>
-  <div class="app" :class="{'align-right': alignRight}">
+  <div class="app" :class="{ 'align-right': alignRight }">
     <h1>Examples</h1>
     <div class="buttons">
       <button @click="toggleDatepickers">Hide datepickers</button>
@@ -7,7 +7,6 @@
       <button @click="toggleTrigger">Toggle trigger</button>
     </div>
     <div v-if="showDatepickers">
-
       <div class="datepicker-container with-input">
         <h3>Range datepicker with input</h3>
         <div class="datepicker-trigger">
@@ -16,19 +15,27 @@
             id="datepicker-input-trigger"
             :value="formatDates(inputDateOne, inputDateTwo)"
             placeholder="Select dates"
-          >
+          />
 
           <airbnb-style-datepicker
             :trigger-element-id="'datepicker-input-trigger'"
             :mode="'range'"
             :date-one="inputDateOne"
             :date-two="inputDateTwo"
-            :min-date="'2018-08-28'"
+            :min-date="new Date('2018-08-28')"
             :months-to-show="2"
             :show-action-buttons="true"
             :show-month-year-select="true"
-            @date-one-selected="val => { inputDateOne = val }"
-            @date-two-selected="val => { inputDateTwo = val }"
+            @date-one-selected="
+              val => {
+                inputDateOne = val
+              }
+            "
+            @date-two-selected="
+              val => {
+                inputDateTwo = val
+              }
+            "
           />
         </div>
       </div>
@@ -41,14 +48,18 @@
             id="datepicker-input-single-trigger"
             :value="formatDates(inputSingleDateOne)"
             placeholder="Select dates"
-          >
+          />
 
           <airbnb-style-datepicker
             :trigger-element-id="'datepicker-input-single-trigger'"
             :mode="'single'"
             :date-one="inputSingleDateOne"
             :date-two="inputSingleDateTwo"
-            @date-one-selected="val => { inputSingleDateOne = val }"
+            @date-one-selected="
+              val => {
+                inputSingleDateOne = val
+              }
+            "
           />
         </div>
       </div>
@@ -56,7 +67,9 @@
       <div class="datepicker-container with-button">
         <h3>Range datepicker with button</h3>
         <div class="datepicker-trigger">
-          <button id="datepicker-button-trigger">{{ formatDates(buttonDateOne, buttonDateTwo) || 'Select dates' }}</button>
+          <button id="datepicker-button-trigger">
+            {{ formatDates(buttonDateOne, buttonDateTwo) || 'Select dates' }}
+          </button>
 
           <airbnb-style-datepicker
             :trigger-element-id="'datepicker-button-trigger'"
@@ -69,8 +82,17 @@
             :trigger="trigger"
             :offset-y="10"
             :close-after-select="true"
-            @date-one-selected="val => { buttonDateOne = val }"
-            @date-two-selected="val => { buttonDateTwo = val; trigger = false }"
+            @date-one-selected="
+              val => {
+                buttonDateOne = val
+              }
+            "
+            @date-two-selected="
+              val => {
+                buttonDateTwo = val
+                trigger = false
+              }
+            "
           />
         </div>
       </div>
@@ -82,7 +104,7 @@
           :value="formatDates(inlineDateOne)"
           type="text"
           placeholder="Select date"
-        >
+        />
         <airbnb-style-datepicker
           :trigger-element-id="'datepicker-inline-trigger'"
           :mode="'single'"
@@ -90,9 +112,32 @@
           :fullscreen-mobile="false"
           :date-one="inlineDateOne"
           :months-to-show="2"
-          :disabled-dates="['2018-04-30', '2018-05-10', '2018-12-14']"
-          :customized-dates="[{ dates: ['2019-03-21', '2019-03-22', '2019-03-23', '2019-03-24'], cssClass: 'booked' }, { dates: ['2019-03-21', '2019-03-22', '2019-03-23', '2019-04-24'], cssClass: 'not-available' }]"
-          @date-one-selected="val => { inlineDateOne = val }"
+          :disabled-dates="[new Date('2018-04-30'), new Date('2018-05-10'), new Date('2018-12-14')]"
+          :customized-dates="[
+            {
+              dates: [
+                new Date('2019-03-21'),
+                new Date('2019-03-22'),
+                new Date('2019-03-23'),
+                new Date('2019-03-24'),
+              ],
+              cssClass: 'booked',
+            },
+            {
+              dates: [
+                new Date('2019-03-21'),
+                new Date('2019-03-22'),
+                new Date('2019-03-23'),
+                new Date('2019-04-24'),
+              ],
+              cssClass: 'not-available',
+            },
+          ]"
+          @date-one-selected="
+            val => {
+              inlineDateOne = val
+            }
+          "
         />
       </div>
 
@@ -103,7 +148,7 @@
           :value="formatDates(withDisabledDatesDateOne)"
           type="text"
           placeholder="Select date"
-        >
+        />
         <airbnb-style-datepicker
           :trigger-element-id="'datepicker-disabled-dates-trigger'"
           :mode="'single'"
@@ -111,14 +156,20 @@
           :date-one="withDisabledDatesDateOne"
           :months-to-show="2"
           :disabled-dates="disabledDates"
-          @date-one-selected="val => { withDisabledDatesDateOne = val }"
+          @date-one-selected="
+            val => {
+              withDisabledDatesDateOne = val
+            }
+          "
         />
       </div>
 
       <div class="datepicker-container with-button">
         <h3>Test callback methods</h3>
         <div class="datepicker-trigger">
-          <button id="datepicker-callback-trigger">{{ formatDates(callbackDateOne, callbackDateTwo) || 'Select dates' }}</button>
+          <button id="datepicker-callback-trigger">
+            {{ formatDates(callbackDateOne, callbackDateTwo) || 'Select dates' }}
+          </button>
 
           <airbnb-style-datepicker
             :trigger-element-id="'datepicker-callback-trigger'"
@@ -128,8 +179,16 @@
             :fullscreen-mobile="true"
             :months-to-show="2"
             :offset-y="10"
-            @date-one-selected="val => { callbackDateOne = val }"
-            @date-two-selected="val => { callbackDateTwo = val }"
+            @date-one-selected="
+              val => {
+                callbackDateOne = val
+              }
+            "
+            @date-two-selected="
+              val => {
+                callbackDateTwo = val
+              }
+            "
             @apply="applyMethod"
             @closed="closedMethod"
             @cancelled="cancelledMethod"
@@ -144,22 +203,24 @@
 </template>
 
 <script>
+/* eslint-disable */
 import format from 'date-fns/format'
+import parseISO from 'date-fns/parseISO'
 
 export default {
   data() {
     return {
-      dateFormat: 'YYYY-MM-DD', //'D MMM',
-      inputDateOne: '',
-      inputDateTwo: '',
-      inputSingleDateOne: '',
-      inputSingleDateTwo: '',
-      buttonDateOne: '',
-      buttonDateTwo: '',
-      inlineDateOne: '',
-      withDisabledDatesDateOne: '',
-      callbackDateOne: '',
-      callbackDateTwo: '',
+      dateFormat: 'yyyy-MM-dd', //'d MMM',
+      inputDateOne: null,
+      inputDateTwo: null,
+      inputSingleDateOne: null,
+      inputSingleDateTwo: null,
+      buttonDateOne: null,
+      buttonDateTwo: null,
+      inlineDateOne: null,
+      withDisabledDatesDateOne: null,
+      callbackDateOne: null,
+      callbackDateTwo: null,
       sundayFirst: false,
       alignRight: false,
       showDatepickers: true,
@@ -168,23 +229,27 @@ export default {
   },
   computed: {
     disabledDates() {
-      return ['2018-12-30', '2018-12-10', '2018-12-14']
+      return [
+        new Date('2018-12-30').toISOString(),
+        new Date('2018-12-10').toISOString(),
+        new Date('2018-12-14').toISOString(),
+      ]
     },
   },
   created() {
     setTimeout(() => {
-      this.inputDateOne = '2019-01-12'
-      this.inputDateTwo = ''
+      this.inputDateOne = new Date('2019-01-12').toISOString()
+      // this.inputDateTwo = ''
     }, 5000)
   },
   methods: {
     formatDates(dateOne, dateTwo) {
       let formattedDates = ''
       if (dateOne) {
-        formattedDates = format(dateOne, this.dateFormat)
+        formattedDates = format(parseISO(dateOne), this.dateFormat)
       }
       if (dateTwo) {
-        formattedDates += ' - ' + format(dateTwo, this.dateFormat)
+        formattedDates += ' - ' + format(parseISO(dateTwo), this.dateFormat)
       }
       return formattedDates
     },

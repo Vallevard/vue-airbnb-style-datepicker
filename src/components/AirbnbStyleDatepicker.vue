@@ -1,5 +1,6 @@
 <template>
   <transition name="asd__fade">
+    <!-- eslint-disable -->
     <div
       :id="wrapperId"
       class="asd__wrapper"
@@ -46,7 +47,7 @@
           class="asd__days-legend"
           v-for="(month, index) in showMonths"
           :key="month"
-          :style="[monthWidthStyles, {left: (width * index) + 'px'}]"
+          :style="[monthWidthStyles, { left: width * index + 'px' }]"
         >
           <div class="asd__day-title" v-for="(day, index) in daysShort" :key="index">{{ day }}</div>
         </div>
@@ -58,7 +59,7 @@
             v-for="(month, monthIndex) in months"
             :key="month.firstDateOfMonth"
             class="asd__month"
-            :class="{'asd__month--hidden': monthIndex === 0 || monthIndex > showMonths}"
+            :class="{ 'asd__month--hidden': monthIndex === 0 || monthIndex > showMonths }"
             :style="monthWidthStyles"
           >
             <div class="asd__month-name">
@@ -75,7 +76,9 @@
                   :value="monthName"
                   :disabled="isMonthDisabled(month.year, idx)"
                   :key="`month-${monthIndex}-${monthName}`"
-                >{{ monthName }}</option>
+                >
+                  {{ monthName }}
+                </option>
               </select>
               <span v-else>{{ month.monthName }}</span>
 
@@ -89,14 +92,16 @@
                 <option
                   v-if="years.indexOf(month.year) === -1"
                   :value="month.year"
-                  :key="`month-${monthIndex}-${year}`"
+                  :key="`month-${monthIndex}-${month.year}`"
                   :disabled="true"
-                >{{ month.year }}</option>
-                <option
+                >
+                  {{ month.year }}
+                </option>
+                <!-- <option
                   v-for="year in years"
                   :value="year"
                   :key="`month-${monthIndex}-${year}`"
-                >{{ year }}</option>
+                >{{ year }}</option> -->
               </select>
               <span v-else>{{ month.year }}</span>
             </div>
@@ -106,25 +111,35 @@
                 <tr class="asd__week" v-for="(week, index) in month.weeks" :key="index">
                   <td
                     class="asd__day"
-                    v-for="({fullDate, dayNumber}, index) in week"
+                    v-for="({ fullDate, dayNumber }, index) in week"
                     :key="index + '_' + dayNumber"
                     :data-date="fullDate"
                     :ref="`date-${fullDate}`"
-                    :tabindex="isDateVisible(fullDate) && isSameDate(focusedDate, fullDate) ? 0 : -1"
+                    :tabindex="
+                      isDateVisible(fullDate) && isSameDate(focusedDate, fullDate) ? 0 : -1
+                    "
                     :aria-label="isDateVisible(fullDate) ? getAriaLabelForDate(fullDate) : false"
-                    :class="[{
-                      'asd__day--enabled': dayNumber !== 0,
-                      'asd__day--empty': dayNumber === 0,
-                      'asd__day--disabled': isDisabled(fullDate),
-                      'asd__day--selected': fullDate && (selectedDate1 === fullDate || selectedDate2 === fullDate),
-                      'asd__day--in-range': isInRange(fullDate),
-                      'asd__day--today': fullDate && isToday(fullDate),
-                      'asd__day--hovered': isHoveredInRange(fullDate),
-                      'asd__selected-date-one': fullDate && fullDate === selectedDate1,
-                      'asd__selected-date-two': fullDate && fullDate === selectedDate2,
-                    }, customizedDateClass(fullDate)]"
+                    :class="[
+                      {
+                        'asd__day--enabled': dayNumber !== 0,
+                        'asd__day--empty': dayNumber === 0,
+                        'asd__day--disabled': isDisabled(fullDate),
+                        'asd__day--selected':
+                          fullDate && (selectedDate1 === fullDate || selectedDate2 === fullDate),
+                        'asd__day--in-range': isInRange(fullDate),
+                        'asd__day--today': fullDate && isToday(fullDate),
+                        'asd__day--hovered': isHoveredInRange(fullDate),
+                        'asd__selected-date-one': fullDate && fullDate === selectedDate1,
+                        'asd__selected-date-two': fullDate && fullDate === selectedDate2,
+                      },
+                      customizedDateClass(fullDate),
+                    ]"
                     :style="getDayStyles(fullDate)"
-                    @mouseover="() => { setHoverDate(fullDate) }"
+                    @mouseover="
+                      () => {
+                        setHoverDate(fullDate)
+                      }
+                    "
                   >
                     <button
                       class="asd__day-button"
@@ -133,8 +148,14 @@
                       tabindex="-1"
                       :date="fullDate"
                       :disabled="isDisabled(fullDate)"
-                      @click="() => { selectDate(fullDate) }"
-                    >{{ dayNumber }}</button>
+                      @click="
+                        () => {
+                          selectDate(fullDate)
+                        }
+                      "
+                    >
+                      {{ dayNumber }}
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -143,7 +164,10 @@
         </transition-group>
         <div
           v-if="showShortcutsMenuTrigger"
-          :class="{ 'asd__keyboard-shortcuts-menu': true, 'asd__keyboard-shortcuts-show': showKeyboardShortcutsMenu}"
+          :class="{
+            'asd__keyboard-shortcuts-menu': true,
+            'asd__keyboard-shortcuts-show': showKeyboardShortcutsMenu,
+          }"
           :style="keyboardShortcutsMenuStyles"
         >
           <div class="asd__keyboard-shortcuts-title">{{ texts.keyboardShortcuts }}</div>
@@ -159,10 +183,9 @@
           </button>
           <ul class="asd__keyboard-shortcuts-list">
             <li v-for="(shortcut, i) in keyboardShortcuts" :key="i">
-              <span
-                class="asd__keyboard-shortcuts-symbol"
-                :aria-label="shortcut.symbolDescription"
-              >{{ shortcut.symbol }}</span>
+              <span class="asd__keyboard-shortcuts-symbol" :aria-label="shortcut.symbolDescription">
+                {{ shortcut.symbol }}
+              </span>
               {{ shortcut.label }}
             </li>
           </ul>
@@ -170,12 +193,9 @@
       </div>
       <div class="asd__action-buttons" v-if="mode !== 'single' && showActionButtons">
         <button @click="closeDatepickerCancel" type="button">{{ texts.cancel }}</button>
-        <button
-          ref="apply-button"
-          @click="apply"
-          :style="{color: colors.selected}"
-          type="button"
-        >{{ texts.apply }}</button>
+        <button ref="apply-button" @click="apply" :style="{ color: colors.selected }" type="button">
+          {{ texts.apply }}
+        </button>
       </div>
       <div v-if="showShortcutsMenuTrigger" class="asd__keyboard-shortcuts-trigger-wrapper">
         <button
@@ -192,6 +212,7 @@
 </template>
 
 <script>
+/* eslint-disable */
 import format from 'date-fns/format'
 import subMonths from 'date-fns/sub_months'
 import addMonths from 'date-fns/add_months'
@@ -213,6 +234,8 @@ import endOfWeek from 'date-fns/end_of_week'
 import isBefore from 'date-fns/is_before'
 import isAfter from 'date-fns/is_after'
 import isValid from 'date-fns/is_valid'
+import parseISO from 'date-fns/parseISO'
+
 import { debounce, copyObject, findAncestor, randomString } from './../helpers'
 import vClickOutside from 'v-click-outside'
 import ResizeSelect from '../directives/ResizeSelect'
@@ -225,10 +248,10 @@ export default {
   },
   props: {
     triggerElementId: { type: String },
-    dateOne: { type: [String, Date] },
-    dateTwo: { type: [String, Date] },
-    minDate: { type: [String, Date] },
-    endDate: { type: [String, Date] },
+    dateOne: { type: Date },
+    dateTwo: { type: Date },
+    minDate: { type: Date },
+    endDate: { type: Date },
     mode: { type: String, default: 'range' },
     offsetY: { type: Number, default: 0 },
     offsetX: { type: Number, default: 0 },
@@ -254,8 +277,8 @@ export default {
   data() {
     return {
       wrapperId: 'airbnb-style-datepicker-wrapper-' + randomString(5),
-      dateFormat: 'YYYY-MM-DD',
-      dateLabelFormat: 'dddd, MMMM D, YYYY',
+      dateFormat: 'yyyy-LL-dd',
+      dateLabelFormat: 'iiii, LLLL d, yyyy',
       showDatepicker: false,
       showKeyboardShortcutsMenu: false,
       showMonths: 2,
@@ -340,15 +363,15 @@ export default {
         questionMark: 191,
         esc: 27,
       },
-      startingDate: '',
+      startingDate: null,
       months: [],
       years: [],
       width: 300,
-      selectedDate1: '',
-      selectedDate2: '',
+      selectedDate1: null,
+      selectedDate2: null,
       isSelectingDate1: true,
-      hoverDate: '',
-      focusedDate: '',
+      hoverDate: null,
+      focusedDate: null,
       alignRight: false,
       triggerPosition: {},
       triggerWrapperPosition: {},
@@ -887,7 +910,7 @@ export default {
       const dateElement = this.$refs[`date-${formattedDate}`]
       // handle .focus() on ie11 by adding a short timeout
       if (dateElement && dateElement.length) {
-        setTimeout(function() {
+        setTimeout(function () {
           dateElement[0].focus()
         }, 10)
       }
@@ -1078,7 +1101,7 @@ export default {
         ? 2
         : this.monthsToShow
 
-      this.$nextTick(function() {
+      this.$nextTick(function () {
         const datepickerWrapper = document.getElementById(this.wrapperId)
         if (!this.triggerElement || !datepickerWrapper) {
           return
