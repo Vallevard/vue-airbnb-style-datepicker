@@ -7,7 +7,7 @@
       <button @click="toggleTrigger">Toggle trigger</button>
     </div>
     <div v-if="showDatepickers">
-      <div class="datepicker-container with-input">
+      <!-- <div class="datepicker-container with-input">
         <h3>Range datepicker with input</h3>
         <div class="datepicker-trigger">
           <input
@@ -38,7 +38,7 @@
             "
           />
         </div>
-      </div>
+      </div> -->
 
       <div class="datepicker-container single-with-input">
         <h3>Single datepicker with input</h3>
@@ -66,7 +66,7 @@
 
       <div class="datepicker-container with-button">
         <h3>Range datepicker with button</h3>
-        <div class="datepicker-trigger">
+        <!-- <div class="datepicker-trigger">
           <button id="datepicker-button-trigger">
             {{ formatDates(buttonDateOne, buttonDateTwo) || 'Select dates' }}
           </button>
@@ -94,10 +94,10 @@
               }
             "
           />
-        </div>
+        </div> -->
       </div>
 
-      <div class="datepicker-container inline-with-input">
+      <!-- <div class="datepicker-container inline-with-input">
         <h3>Inline datepicker with input</h3>
         <input
           id="datepicker-inline-trigger"
@@ -139,9 +139,9 @@
             }
           "
         />
-      </div>
+      </div> -->
 
-      <div class="datepicker-container inline-with-input">
+      <!-- <div class="datepicker-container inline-with-input">
         <h3>Inline datepicker with disabled dates</h3>
         <input
           id="datepicker-disabled-dates-trigger"
@@ -162,11 +162,11 @@
             }
           "
         />
-      </div>
+      </div> -->
 
       <div class="datepicker-container with-button">
         <h3>Test callback methods</h3>
-        <div class="datepicker-trigger">
+        <!-- <div class="datepicker-trigger">
           <button id="datepicker-callback-trigger">
             {{ formatDates(callbackDateOne, callbackDateTwo) || 'Select dates' }}
           </button>
@@ -196,7 +196,7 @@
             @previous-month="changeMonthMethod"
             @next-month="changeMonthMethod"
           />
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -210,7 +210,7 @@ import parseISO from 'date-fns/parseISO'
 export default {
   data() {
     return {
-      dateFormat: 'yyyy-MM-dd', //'d MMM',
+      dateFormat: 'yyyy-LL-dd', //'d MMM',
       inputDateOne: null,
       inputDateTwo: null,
       inputSingleDateOne: null,
@@ -229,16 +229,12 @@ export default {
   },
   computed: {
     disabledDates() {
-      return [
-        new Date('2018-12-30').toISOString(),
-        new Date('2018-12-10').toISOString(),
-        new Date('2018-12-14').toISOString(),
-      ]
+      return [new Date('2018-12-30'), new Date('2018-12-10'), new Date('2018-12-14')]
     },
   },
   created() {
     setTimeout(() => {
-      this.inputDateOne = new Date('2019-01-12').toISOString()
+      this.inputDateOne = new Date('2019-01-12')
       // this.inputDateTwo = ''
     }, 5000)
   },

@@ -214,26 +214,26 @@
 <script>
 /* eslint-disable */
 import format from 'date-fns/format'
-import subMonths from 'date-fns/sub_months'
-import addMonths from 'date-fns/add_months'
-import getDaysInMonth from 'date-fns/get_days_in_month'
-import lastDayOfMonth from 'date-fns/last_day_of_month'
-import getMonth from 'date-fns/get_month'
-import setMonth from 'date-fns/set_month'
-import getYear from 'date-fns/get_year'
-import setYear from 'date-fns/set_year'
-import isSameMonth from 'date-fns/is_same_month'
-import isSameDay from 'date-fns/is_same_day'
-import addDays from 'date-fns/add_days'
-import subDays from 'date-fns/sub_days'
-import addWeeks from 'date-fns/add_weeks'
-import subWeeks from 'date-fns/sub_weeks'
-import startOfMonth from 'date-fns/start_of_month'
-import startOfWeek from 'date-fns/start_of_week'
-import endOfWeek from 'date-fns/end_of_week'
-import isBefore from 'date-fns/is_before'
-import isAfter from 'date-fns/is_after'
-import isValid from 'date-fns/is_valid'
+import subMonths from 'date-fns/subMonths'
+import addMonths from 'date-fns/addMonths'
+import getDaysInMonth from 'date-fns/getDaysInMonth'
+import lastDayOfMonth from 'date-fns/lastDayOfMonth'
+import getMonth from 'date-fns/getMonth'
+import setMonth from 'date-fns/setMonth'
+import getYear from 'date-fns/getYear'
+import setYear from 'date-fns/setYear'
+import isSameMonth from 'date-fns/isSameMonth'
+import isSameDay from 'date-fns/isSameDay'
+import addDays from 'date-fns/addDays'
+import subDays from 'date-fns/subDays'
+import addWeeks from 'date-fns/addWeeks'
+import subWeeks from 'date-fns/subWeeks'
+import startOfMonth from 'date-fns/startOfMonth'
+import startOfWeek from 'date-fns/startOfWeek'
+import endOfWeek from 'date-fns/endOfWeek'
+import isBefore from 'date-fns/isBefore'
+import isAfter from 'date-fns/isAfter'
+import isValid from 'date-fns/isValid'
 import parseISO from 'date-fns/parseISO'
 
 import { debounce, copyObject, findAncestor, randomString } from './../helpers'
@@ -593,7 +593,7 @@ export default {
       return styles
     },
     getAriaLabelForDate(date) {
-      const dateLabel = format(date, this.dateLabelFormat)
+      const dateLabel = format(parseISO(date), this.dateLabelFormat)
 
       const isDisabled = this.isDisabled(date)
       if (isDisabled) {
@@ -815,9 +815,9 @@ export default {
       this.daysShort.unshift(lastDayShort)
     },
     getMonth(date) {
-      const firstDateOfMonth = format(date, 'YYYY-MM-01')
-      const year = format(date, 'YYYY')
-      const monthNumber = parseInt(format(date, 'M'))
+      const firstDateOfMonth = format(parseISO(date), 'yyyy-LL-01')
+      const year = format(parseISO(date), 'yyyy')
+      const monthNumber = parseInt(format(parseISO(date), 'M'))
       const monthName = this.monthNames[monthNumber - 1]
 
       return {
@@ -831,9 +831,10 @@ export default {
     getWeeks(date) {
       const weekDayNotInMonth = { dayNumber: 0 }
       const daysInMonth = getDaysInMonth(date)
-      const year = format(date, 'YYYY')
-      const month = format(date, 'MM')
-      let firstDayInWeek = parseInt(format(date, this.sundayFirst ? 'd' : 'E'))
+      const year = format(parseISO(date), 'yyyy')
+      const month = format(parseISO(date), 'LL')
+      let firstDayInWeek = parseInt(format(parseISO(date), this.sundayFirst ? 'i' : 'E'))
+      // let firstDayInWeek = parseInt(format(date, this.sundayFirst ? 'i' : 'E'))
       if (this.sundayFirst) {
         firstDayInWeek++
       }
@@ -1018,7 +1019,7 @@ export default {
       return format(subMonths(date, 1), this.dateFormat)
     },
     addMonths(date) {
-      return format(addMonths(date, 1), this.dateFormat)
+      return format(addMonths(parseISO(date), 1), this.dateFormat)
     },
     toggleDatepicker() {
       if (this.showDatepicker) {
