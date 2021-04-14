@@ -1,6 +1,5 @@
 <template>
   <transition name="asd__fade">
-    <!-- eslint-disable -->
     <div
       :id="wrapperId"
       class="asd__wrapper"
@@ -9,7 +8,6 @@
       :style="showFullscreen ? undefined : wrapperStyles"
       v-click-outside="handleClickOutside"
     >
-      <!-- . -->
       <div class="asd__mobile-header asd__mobile-only" v-if="showFullscreen">
         <button
           type="button"
@@ -22,7 +20,6 @@
         </button>
         <h3>{{ mobileHeader || mobileHeaderFallback }}</h3>
       </div>
-
       <div class="asd__datepicker-header">
         <div class="asd__change-month-button asd__change-month-button--previous">
           <button @click="previousMonth" type="button" :aria-label="ariaLabels.previousMonth">
@@ -94,14 +91,14 @@
                 <option
                   v-if="years.indexOf(month.year) === -1"
                   :value="month.year"
-                  :key="`month-${monthIndex}-${month.year}`"
+                  :key="`month-${monthIndex}-${year}`"
                   :disabled="true"
                 >
                   {{ month.year }}
                 </option>
-                <!-- <option v-for="year in years" :value="year" :key="`month-${monthIndex}-${year}`">
+                <option v-for="year in years" :value="year" :key="`month-${monthIndex}-${year}`">
                   {{ year }}
-                </option> -->
+                </option>
               </select>
               <span v-else>{{ month.year }}</span>
             </div>
@@ -183,15 +180,30 @@
           </button>
           <ul class="asd__keyboard-shortcuts-list">
             <li v-for="(shortcut, i) in keyboardShortcuts" :key="i">
-              <span
-                class="asd__keyboard-shortcuts-symbol"
-                :aria-label="shortcut.symbolDescription"
-                >{{ shortcut.symbol }}</span
-              >
+              <span class="asd__keyboard-shortcuts-symbol" :aria-label="shortcut.symbolDescription">
+                {{ shortcut.symbol }}
+              </span>
               {{ shortcut.label }}
             </li>
           </ul>
         </div>
+      </div>
+      <div class="asd__action-buttons" v-if="mode !== 'single' && showActionButtons">
+        <button @click="closeDatepickerCancel" type="button">{{ texts.cancel }}</button>
+        <!--  eslint-disable-next-line  -->
+        <button ref="apply-button" @click="apply" :style="{ color: colors.selected }" type="button">
+          {{ texts.apply }}
+        </button>
+      </div>
+      <div v-if="showShortcutsMenuTrigger" class="asd__keyboard-shortcuts-trigger-wrapper">
+        <button
+          class="asd__keyboard-shortcuts-trigger"
+          :aria-label="ariaLabels.openKeyboardShortcutsMenu"
+          tabindex="0"
+          @click="openKeyboardShortcutsMenu"
+        >
+          <span>?</span>
+        </button>
       </div>
     </div>
   </transition>
@@ -410,6 +422,14 @@ export default {
         width: this.showFullscreen ? this.viewportWidth : this.width + 'px',
       }
     },
+    visibleMonths() {
+      const firstMonthArray = this.months.filter((m, index) => index > 0)
+      const numberOfMonthsArray = []
+      for (let i = 0; i < this.showMonths; i++) {
+        numberOfMonthsArray.push(i)
+      }
+      return numberOfMonthsArray.map((_, index) => firstMonthArray[index].firstDateOfMonth)
+    },
   },
   watch: {},
   created() {
@@ -428,6 +448,7 @@ export default {
     //   this.setStartDates()
     // }, 200)
     this._handleWindowClickEvent = event => {
+      console.log('_handleWindowClickEvent', event.target.id, this.triggerElementId)
       if (event.target.id === this.triggerElementId) {
         event.stopPropagation()
         event.preventDefault()
@@ -533,6 +554,11 @@ export default {
       this.showKeyboardShortcutsMenu = false
       this.$nextTick(() => this.setFocusedDate(this.focusedDate))
     },
+    openKeyboardShortcutsMenu() {
+      this.showKeyboardShortcutsMenu = true
+      const shortcutMenuCloseBtn = this.$refs['keyboard-shortcus-menu-close']
+      this.$nextTick(() => shortcutMenuCloseBtn.focus())
+    },
     isToday(date) {
       return format(new Date(), this.dateFormat) === date
     },
@@ -570,21 +596,34 @@ export default {
       if (!this.minDate) {
         return false
       }
+      date = parseISO(date)
       return isBefore(date, this.minDate)
     },
     isAfterEndDate(date) {
       if (!this.endDate) {
         return false
       }
+      date = parseISO(date)
       return isAfter(date, this.endDate)
     },
+    isDateVisible(date) {
+      date = parseISO(date)
+      if (!date) {
+        return false
+      }
+      const start = subDays(this.visibleMonths[0], 1)
+      const end = addDays(lastDayOfMonth(this.visibleMonths[this.monthsToShow - 1]), 1)
+      return isAfter(date, start) && isBefore(date, end)
+    },
     isDateDisabled(date) {
+      date = parseISO(date)
       if (this.enabledDates.length > 0) {
         return this.enabledDates.indexOf(date) === -1
       } else {
         return this.disabledDates.indexOf(date) > -1
       }
     },
+
     customizedDateClass(date) {
       var customizedClasses = ''
       if (this.customizedDates.length > 0) {
@@ -596,6 +635,7 @@ export default {
       return customizedClasses
     },
     isDisabled(date) {
+      date = parseISO(date)
       return this.isDateDisabled(date) || this.isBeforeMinDate(date) || this.isAfterEndDate(date)
     },
     previousMonth() {
@@ -648,9 +688,11 @@ export default {
     },
 
     getWeeks(date) {
-      date = parseISO(date)
       const weekDayNotInMonth = { dayNumber: 0 }
+      date = parseISO(date)
+      console.log('getWeeks', date)
       const daysInMonth = getDaysInMonth(date)
+
       const year = format(date, 'yyyy')
       const month = format(date, 'MM')
       let firstDayInWeek = parseInt(format(date, 'd'))
@@ -746,7 +788,7 @@ export default {
       this.focusedDate = startDate
     },
     setSundayToFirstDayInWeek() {
-      console.log(setSundayToFirstDayInWeek)
+      console.log('setSundayToFirstDayInWeek', setSundayToFirstDayInWeek)
       const lastDay = this.days.pop()
       this.days.unshift(lastDay)
       const lastDayShort = this.daysShort.pop()
@@ -784,6 +826,11 @@ export default {
       })
     },
 
+    setHoverDate(date) {
+      // console.log('setHoverDate', date)
+      date = parseISO(date)
+      this.hoverDate = date
+    },
     // setStyles
     // setFocusedDate(date) {
     //   // const formattedDate = format(date, this.dateFormat)
