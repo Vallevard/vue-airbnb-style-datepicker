@@ -91,7 +91,7 @@
                 <option
                   v-if="years.indexOf(month.year) === -1"
                   :value="month.year"
-                  :key="`month-${monthIndex}-${year}`"
+                  :key="`month-${monthIndex}-${month.year}`"
                   :disabled="true"
                 >
                   {{ month.year }}
@@ -129,15 +129,23 @@
                         'asd__selected-date-one': fullDate && fullDate === selectedDate1,
                         'asd__selected-date-two': fullDate && fullDate === selectedDate2,
                       },
-                      customizedDateClass(fullDate),
+                      //customizedDateClass(fullDate),
                     ]"
+                  >
+                    <!-- 
+                    
+                    
+                        
+                        
+                        
+                        
                     :style="getDayStyles(fullDate)"
                     @mouseover="
                       () => {
                         setHoverDate(fullDate)
                       }
                     "
-                  >
+                  -->
                     <button
                       class="asd__day-button"
                       type="button"
@@ -246,10 +254,10 @@ export default {
   },
   props: {
     triggerElementId: { type: String },
-    dateOne: { type: Date },
-    dateTwo: { type: Date },
-    minDate: { type: Date },
-    endDate: { type: Date },
+    dateOne: { type: String | Date },
+    dateTwo: { type: String | Date },
+    minDate: { type: String | Date },
+    endDate: { type: String | Date },
     mode: { type: String, default: 'range' },
     offsetY: { type: Number, default: 0 },
     offsetX: { type: Number, default: 0 },
@@ -411,16 +419,54 @@ export default {
         left: this.showFullscreen ? this.viewportWidth : `${this.width}px`,
       }
     },
-    showFullscreen() {
-      return this.isMobile && this.fullscreenMobile
-    },
-    mobileHeaderFallback() {
-      return this.mode === 'range' ? 'Select dates' : 'Select date'
-    },
     monthWidthStyles() {
       return {
         width: this.showFullscreen ? this.viewportWidth : this.width + 'px',
       }
+    },
+    mobileHeaderFallback() {
+      return this.mode === 'range' ? 'Select dates' : 'Select date'
+    },
+    showFullscreen() {
+      return this.isMobile && this.fullscreenMobile
+    },
+    datesSelected() {
+      return !!(
+        (this.selectedDate1 && this.selectedDate1 !== '') ||
+        (this.selectedDate2 && this.selectedDate2 !== '')
+      )
+    },
+    allDatesSelected() {
+      return !!(
+        this.selectedDate1 &&
+        this.selectedDate1 !== '' &&
+        this.selectedDate2 &&
+        this.selectedDate2 !== ''
+      )
+    },
+    hasMinDate() {
+      return !!(this.minDate && this.minDate !== '')
+    },
+    isRangeMode() {
+      return this.mode === 'range'
+    },
+    isSingleMode() {
+      return this.mode === 'single'
+    },
+    datepickerWidth() {
+      return this.width * this.showMonths
+    },
+    datePropsCompound() {
+      console.log('datePropsCompound', this.dateOne, this.dateTwo)
+      // used to watch for changes in props, and update GUI accordingly
+      return this.dateTwo ? this.dateOne + this.dateTwo : this.dateOne
+    },
+    isDateTwoBeforeDateOne() {
+      if (!this.dateTwo) {
+        return false
+      }
+      console.log('isDateTwoBeforeDateOne', this.dateTwo)
+      return isBefore(parseISO(this.dateTwo), parseISO(this.dateOne))
     },
     visibleMonths() {
       const firstMonthArray = this.months.filter((m, index) => index > 0)
@@ -431,7 +477,47 @@ export default {
       return numberOfMonthsArray.map((_, index) => firstMonthArray[index].firstDateOfMonth)
     },
   },
-  watch: {},
+  watch: {
+    selectedDate1(newValue, oldValue) {
+      let newDate = !newValue || newValue === '' ? '' : format(parseISO(newValue), this.dateFormat)
+      this.$emit('date-one-selected', newDate)
+    },
+    selectedDate2(newValue, oldValue) {
+      let newDate = !newValue || newValue === '' ? '' : format(parseISO(newValue), this.dateFormat)
+      this.$emit('date-two-selected', newDate)
+    },
+    mode(newValue, oldValue) {
+      this.setStartDates()
+    },
+    minDate() {
+      this.setStartDates()
+      this.generateMonths()
+      this.generateYears()
+    },
+    endDate() {
+      this.generateYears()
+    },
+    datePropsCompound(newValue) {
+      console.log('datePropsCompound watch', newValue, this.dateTwo)
+      if (this.dateOne !== this.selectedDate1) {
+        this.startingDate = this.dateOne
+        this.setStartDates()
+        this.generateMonths()
+        this.generateYears()
+      }
+      if (this.isDateTwoBeforeDateOne) {
+        this.selectedDate2 = ''
+        this.$emit('date-two-selected', '')
+      }
+    },
+    trigger(newValue, oldValue) {
+      if (newValue) {
+        setTimeout(() => {
+          this.openDatepicker()
+        }, 0)
+      }
+    },
+  },
   created() {
     this.setupDatepicker()
 
@@ -443,20 +529,18 @@ export default {
     this.viewportWidth = window.innerWidth + 'px'
     this.isMobile = window.innerWidth < 768
     this.isTablet = window.innerWidth >= 768 && window.innerWidth <= 1024
-    // this._handleWindowResizeEvent = debounce(() => {
-    //   this.positionDatepicker()
-    //   this.setStartDates()
-    // }, 200)
+    this._handleWindowResizeEvent = debounce(() => {
+      this.positionDatepicker()
+      this.setStartDates()
+    }, 200)
     this._handleWindowClickEvent = event => {
-      console.log('_handleWindowClickEvent', event.target.id, this.triggerElementId)
       if (event.target.id === this.triggerElementId) {
         event.stopPropagation()
         event.preventDefault()
         this.toggleDatepicker()
       }
     }
-
-    // window.addEventListener('resize', this._handleWindowResizeEvent)
+    window.addEventListener('resize', this._handleWindowResizeEvent)
 
     this.triggerElement = this.isTest
       ? document.createElement('input')
@@ -464,7 +548,7 @@ export default {
 
     this.setStartDates()
     this.generateMonths()
-    //     this.generateYears()
+    this.generateYears()
 
     if (this.startOpen || this.inline) {
       this.openDatepicker()
@@ -517,227 +601,194 @@ export default {
       }
       return styles
     },
+    getAriaLabelForDate(date) {
+      date = date instanceof Date ? date : parseISO(date)
+      const dateLabel = format(date, this.dateLabelFormat)
+
+      const isDisabled = this.isDisabled(date)
+
+      if (isDisabled) {
+        console.log('getAriaLabelForDate - isDisabled')
+        return this.ariaLabels.unavailableDate(dateLabel)
+      }
+
+      const isSelected = this.isSelected(date)
+
+      if (isSelected) {
+        console.log('getAriaLabelForDate - isSelected')
+        return this.ariaLabels.selectedDate(dateLabel)
+      }
+      // console.log(
+      //   'getAriaLabelForDate',
+      //   dateLabel,
+      //   isDisabled,
+      //   isSelected,
+      //   this.isRangeMode,
+      //   this.ariaLabels.chooseDate(dateLabel)
+      // )
+      if (this.isRangeMode) {
+        console.log('getAriaLabelForDate - isRangeMode')
+        if (this.isSelectingDate1) {
+          return this.ariaLabels.chooseStartDate(dateLabel)
+        } else {
+          return this.ariaLabels.chooseEndDate(dateLabel)
+        }
+      } else {
+        return this.ariaLabels.chooseDate(dateLabel)
+      }
+    },
     handleClickOutside(event) {
-      console.log('handleClickOutside')
       if (event.target.id === this.triggerElementId || !this.showDatepicker || this.inline) {
         return
       }
       this.closeDatepicker()
     },
-
-    openDatepicker() {
-      this.positionDatepicker()
-      this.setStartDates()
-      this.triggerElement.classList.add('datepicker-open')
-      this.showDatepicker = true
-      this.initialDate1 = this.dateOne
-      this.initialDate2 = this.dateTwo
-      console.log('openDatepicker', this.initialDate1, this.initialDate2)
-      // console.log();
-      this.$emit('opened')
-      this.$nextTick(() => {
-        if (!this.inline) this.setFocusedDate(this.focusedDate)
-      })
-    },
-    closeDatepicker() {
-      console.log('closeDatepicker')
-      if (this.inline) {
-        return
-      }
-      this.showDatepicker = false
-      this.showKeyboardShortcutsMenu = false
-      this.triggerElement.classList.remove('datepicker-open')
-      this.$emit('closed')
-    },
-
-    closeKeyboardShortcutsMenu() {
-      this.showKeyboardShortcutsMenu = false
-      this.$nextTick(() => this.setFocusedDate(this.focusedDate))
-    },
-    openKeyboardShortcutsMenu() {
-      this.showKeyboardShortcutsMenu = true
-      const shortcutMenuCloseBtn = this.$refs['keyboard-shortcus-menu-close']
-      this.$nextTick(() => shortcutMenuCloseBtn.focus())
-    },
-    isToday(date) {
-      return format(new Date(), this.dateFormat) === date
-    },
-    isSelected(date) {
-      if (!date) {
-        return
-      }
-      return this.selectedDate1 === date || this.selectedDate2 === date
-    },
-    isInRange(date) {
-      date = parseISO(date)
-      if (!this.allDatesSelected || this.isSingleMode) {
-        return false
-      }
-
+    shouldHandleInput(event, key) {
       return (
-        (isAfter(date, this.selectedDate1) && isBefore(date, this.selectedDate2)) ||
-        (isAfter(date, this.selectedDate1) &&
-          isBefore(date, this.hoverDate) &&
-          !this.allDatesSelected)
+        event.keyCode === key && (!event.shiftKey || event.keyCode === 191) && this.showDatepicker
       )
     },
-    isHoveredInRange(date) {
-      date = parseISO(date)
-      if (this.isSingleMode || this.allDatesSelected) {
-        return false
-      }
-
-      return (
-        (isAfter(date, this.selectedDate1) && isBefore(date, this.hoverDate)) ||
-        (isAfter(date, this.hoverDate) && isBefore(date, this.selectedDate1))
-      )
-    },
-    isBeforeMinDate(date) {
-      if (!this.minDate) {
-        return false
-      }
-      date = parseISO(date)
-      return isBefore(date, this.minDate)
-    },
-    isAfterEndDate(date) {
-      if (!this.endDate) {
-        return false
-      }
-      date = parseISO(date)
-      return isAfter(date, this.endDate)
-    },
-    isDateVisible(date) {
-      date = parseISO(date)
-      if (!date) {
-        return false
-      }
-      const start = subDays(this.visibleMonths[0], 1)
-      const end = addDays(lastDayOfMonth(this.visibleMonths[this.monthsToShow - 1]), 1)
-      return isAfter(date, start) && isBefore(date, end)
-    },
-    isDateDisabled(date) {
-      date = parseISO(date)
-      if (this.enabledDates.length > 0) {
-        return this.enabledDates.indexOf(date) === -1
-      } else {
-        return this.disabledDates.indexOf(date) > -1
+    handleTriggerInput(event) {
+      if (this.mode === 'single') {
+        this.setDateFromText(event.target.value)
       }
     },
-
-    customizedDateClass(date) {
-      var customizedClasses = ''
-      if (this.customizedDates.length > 0) {
-        for (var i = 0; i < this.customizedDates.length; i++) {
-          if (this.customizedDates[i].dates.indexOf(date) > -1)
-            customizedClasses += ` asd__day--${this.customizedDates[i].cssClass}`
+    trapKeyboardInput(event) {
+      // prevent keys that are used as keyboard shortcuts from propagating out of this element
+      // except for the enter key, which is needed to activate buttons
+      const shortcutKeyCodes = Object.keys(this.keys).map(key => this.keys[key])
+      shortcutKeyCodes.splice(shortcutKeyCodes.indexOf(13), 1)
+      const shouldPreventDefault = shortcutKeyCodes.indexOf(event.keyCode) > -1
+      if (shouldPreventDefault) event.preventDefault()
+    },
+    handleKeyboardInput(event) {
+      if (this.shouldHandleInput(event, this.keys.esc)) {
+        if (this.showKeyboardShortcutsMenu) {
+          this.closeKeyboardShortcutsMenu()
+        } else {
+          this.closeDatepicker()
         }
+      } else if (this.showKeyboardShortcutsMenu) {
+        // if keyboard shortcutsMenu is open, then esc is the only key we want to have fire events
+      } else if (this.shouldHandleInput(event, this.keys.arrowDown)) {
+        const newDate = addWeeks(this.focusedDate, 1)
+        const changeMonths = !isSameMonth(newDate, this.focusedDate)
+        this.setFocusedDate(newDate)
+        if (changeMonths) this.nextMonth()
+      } else if (this.shouldHandleInput(event, this.keys.arrowUp)) {
+        const newDate = subWeeks(this.focusedDate, 1)
+        const changeMonths = !isSameMonth(newDate, this.focusedDate)
+        this.setFocusedDate(newDate)
+        if (changeMonths) this.previousMonth()
+      } else if (this.shouldHandleInput(event, this.keys.arrowRight)) {
+        const newDate = addDays(this.focusedDate, 1)
+        const changeMonths = !isSameMonth(newDate, this.focusedDate)
+        this.setFocusedDate(newDate)
+        if (changeMonths) this.nextMonth()
+      } else if (this.shouldHandleInput(event, this.keys.arrowLeft)) {
+        const newDate = subDays(this.focusedDate, 1)
+        const changeMonths = !isSameMonth(newDate, this.focusedDate)
+        this.setFocusedDate(newDate)
+        if (changeMonths) this.previousMonth()
+      } else if (this.shouldHandleInput(event, this.keys.enter)) {
+        // on enter key, only select the date if a date is currently in focus
+        const target = event.target
+        if (!this.showKeyboardShortcutsMenu && target && target.tagName === 'TD') {
+          this.selectDate(this.focusedDate)
+        }
+      } else if (this.shouldHandleInput(event, this.keys.pgUp)) {
+        this.setFocusedDate(subMonths(this.focusedDate, 1))
+        this.previousMonth()
+      } else if (this.shouldHandleInput(event, this.keys.pgDn)) {
+        this.setFocusedDate(addMonths(this.focusedDate, 1))
+        this.nextMonth()
+      } else if (this.shouldHandleInput(event, this.keys.home)) {
+        const newDate = startOfWeek(this.focusedDate, {
+          weekStartsOn: this.sundayFirst ? 0 : 1,
+        })
+        const changeMonths = !isSameMonth(newDate, this.focusedDate)
+        this.setFocusedDate(newDate)
+        if (changeMonths) this.previousMonth()
+      } else if (this.shouldHandleInput(event, this.keys.end)) {
+        const newDate = endOfWeek(this.focusedDate, {
+          weekStartsOn: this.sundayFirst ? 0 : 1,
+        })
+        const changeMonths = !isSameMonth(newDate, this.focusedDate)
+        this.setFocusedDate(newDate)
+        if (changeMonths) this.nextMonth()
+      } else if (this.shouldHandleInput(event, this.keys.questionMark)) {
+        this.openKeyboardShortcutsMenu()
       }
-      return customizedClasses
     },
-    isDisabled(date) {
-      date = parseISO(date)
-      return this.isDateDisabled(date) || this.isBeforeMinDate(date) || this.isAfterEndDate(date)
+    setDateFromText(value) {
+      if (!value || value.length < 10) {
+        return
+      }
+      // make sure format is either 'yyyy-MM-DD' or 'DD.MM.yyyy'
+      const isFormatYearFirst = value.match(
+        /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$/
+      )
+      const isFormatDayFirst = value.match(
+        /^(0[1-9]|1[0-9]|2[0-9]|3[0-1])[.](0[1-9]|1[0-2])[.](\d{4})$/
+      )
+
+      if (!isFormatYearFirst && !isFormatDayFirst) {
+        return
+      }
+      if (isFormatDayFirst) {
+        //convert to yyyy-MM-DD
+        value = `${value.substring(6, 10)}-${value.substring(3, 5)}-${value.substring(0, 2)}`
+      }
+
+      const valueAsDateObject = new Date(value)
+      if (!isValid(valueAsDateObject)) {
+        return
+      }
+      const formattedDate = format(valueAsDateObject, this.dateFormat)
+      if (
+        this.isDateDisabled(formattedDate) ||
+        this.isBeforeMinDate(formattedDate) ||
+        this.isAfterEndDate(formattedDate)
+      ) {
+        return
+      }
+
+      console.log('subMonths', subMonths(formattedDate, 1))
+      this.startingDate = subMonths(formattedDate, 1)
+      // this.generateMonths()
+      // this.generateYears()
+      // this.selectDate(formattedDate)
     },
-    previousMonth() {
-      console.log('')
-      console.log('previousMonth')
-      // this.startingDate = this.subtractMonths(this.months[0].firstDateOfMonth)
-      // this.months.unshift(this.getMonth(this.startingDate))
-      // this.months.splice(this.months.length - 1, 1)
-      // this.$emit('previous-month', this.visibleMonths)
-      // this.resetFocusedDate(false)
-    },
-    nextMonth() {
-      console.log('nextMonth')
-      // this.startingDate = this.addMonths(this.months[this.months.length - 1].firstDateOfMonth)
-      // this.months.push(this.getMonth(this.startingDate))
-      // this.months.splice(0, 1)
-      // this.$emit('next-month', this.visibleMonths)
-      // this.resetFocusedDate(true)
-    },
-    subtractMonths(date) {
-      console.log('subtractMonths', date)
-      console.log('subtractMonths', subMonths(date, 1))
-      console.log('subtractMonths', format(subMonths(date, 1), this.dateFormat))
-      return format(subMonths(date, 1), this.dateFormat)
+    isMonthDisabled(year, monthIndex) {
+      const monthDate = new Date(year, monthIndex)
+      if (this.hasMinDate && isBefore(monthDate, startOfMonth(this.minDate))) {
+        return true
+      }
+      return this.isAfterEndDate(monthDate)
     },
     generateMonths() {
       this.months = []
       let currentMonth = this.startingDate
-      console.log('generateMonths', currentMonth)
       for (let i = 0; i < this.showMonths + 2; i++) {
         this.months.push(this.getMonth(currentMonth))
-        // currentMonth = this.addMonths(currentMonth)
-      }
-      console.log('generateMonths', this.months)
-    },
-    getMonth(date) {
-      date = parseISO(date)
-      const firstDateOfMonth = format(date, 'yyyy-MM-01')
-      const year = format(date, 'yyyy')
-      const monthNumber = parseInt(format(date, 'M'))
-      const monthName = this.monthNames[monthNumber - 1]
-
-      return {
-        year,
-        firstDateOfMonth,
-        monthName,
-        monthNumber,
-        weeks: this.getWeeks(firstDateOfMonth),
+        currentMonth = this.addMonths(currentMonth)
       }
     },
-
-    getWeeks(date) {
-      const weekDayNotInMonth = { dayNumber: 0 }
-      date = parseISO(date)
-      console.log('getWeeks', date)
-      const daysInMonth = getDaysInMonth(date)
-
-      const year = format(date, 'yyyy')
-      const month = format(date, 'MM')
-      let firstDayInWeek = parseInt(format(date, 'd'))
-      if (this.sundayFirst) {
-        firstDayInWeek++
-      }
-      let weeks = []
-      let week = []
-
-      // add empty days to get first day in correct position
-      for (let s = 1; s < firstDayInWeek; s++) {
-        week.push(weekDayNotInMonth)
-      }
-      for (let d = 0; d < daysInMonth; d++) {
-        let isLastDayInMonth = d >= daysInMonth - 1
-        let dayNumber = d + 1
-        let dayNumberFull = dayNumber < 10 ? '0' + dayNumber : dayNumber
-        week.push({
-          dayNumber,
-          dayNumberFull: dayNumberFull,
-          fullDate: year + '-' + month + '-' + dayNumberFull,
-        })
-
-        if (week.length === 7) {
-          weeks.push(week)
-          week = []
-        } else if (isLastDayInMonth) {
-          for (let i = 0; i < 7 - week.length; i++) {
-            week.push(weekDayNotInMonth)
-          }
-          weeks.push(week)
-          week = []
-        }
-      }
-      return weeks
-    },
-    toggleDatepicker() {
-      if (this.showDatepicker) {
-        this.closeDatepicker()
-      } else {
-        this.openDatepicker()
+    generateYears() {
+      if (!this.showMonthYearSelect) return
+      this.years = []
+      const currentYear = getYear(parseISO(this.startingDate))
+      const startYear = this.minDate
+        ? getYear(pareseISO(this.minDate))
+        : currentYear - this.yearsForSelect
+      const endYear = this.endDate
+        ? getYear(parseISO(this.endDate))
+        : currentYear + this.yearsForSelect
+      for (var year = startYear; year <= endYear; year++) {
+        this.years.push(year.toString())
       }
     },
     setupDatepicker() {
-      console.log('setupDatepicker')
       if (this.$options.ariaLabels) {
         this.ariaLabels = copyObject(this.$options.ariaLabels)
       }
@@ -777,22 +828,325 @@ export default {
     },
     setStartDates() {
       let startDate = this.dateOne || new Date()
-      // .toISOString()
-      // startDate = parseISO(startDate)
-      if (this.hasMinDate && isBefore(startDate, this.minDate)) {
-        startDate = this.minDate
-      }
+
+      console.log(
+        'setStartDates',
+        typeof startDate,
+        this.minDate
+        // isBefore(startDate, this.minDate)
+      )
+
+      if (this.minDate)
+        if (this.hasMinDate && isBefore(parseISO(startDate), parseISO(this.minDate))) {
+          startDate = this.minDate
+        }
+
       this.startingDate = this.subtractMonths(startDate)
       this.selectedDate1 = this.dateOne
       this.selectedDate2 = this.dateTwo
       this.focusedDate = startDate
     },
     setSundayToFirstDayInWeek() {
-      console.log('setSundayToFirstDayInWeek', setSundayToFirstDayInWeek)
       const lastDay = this.days.pop()
       this.days.unshift(lastDay)
       const lastDayShort = this.daysShort.pop()
       this.daysShort.unshift(lastDayShort)
+    },
+    getMonth(date) {
+      date = parseISO(date)
+      const firstDateOfMonth = format(date, 'yyyy-MM-01')
+      const year = format(date, 'yyyy')
+      const monthNumber = parseInt(format(date, 'M'))
+      const monthName = this.monthNames[monthNumber - 1]
+
+      return {
+        year,
+        firstDateOfMonth,
+        monthName,
+        monthNumber,
+        weeks: this.getWeeks(firstDateOfMonth),
+      }
+    },
+    getWeeks(date) {
+      date = parseISO(date)
+      const weekDayNotInMonth = { dayNumber: 0 }
+      const daysInMonth = getDaysInMonth(date)
+      const year = format(date, 'yyyy')
+      const month = format(date, 'MM')
+      let firstDayInWeek = parseInt(format(date, this.sundayFirst ? 'd' : 'E'))
+      if (this.sundayFirst) {
+        firstDayInWeek++
+      }
+      let weeks = []
+      let week = []
+
+      // add empty days to get first day in correct position
+      for (let s = 1; s < firstDayInWeek; s++) {
+        week.push(weekDayNotInMonth)
+      }
+      for (let d = 0; d < daysInMonth; d++) {
+        let isLastDayInMonth = d >= daysInMonth - 1
+        let dayNumber = d + 1
+        let dayNumberFull = dayNumber < 10 ? '0' + dayNumber : dayNumber
+        week.push({
+          dayNumber,
+          dayNumberFull: dayNumberFull,
+          fullDate: year + '-' + month + '-' + dayNumberFull,
+        })
+
+        if (week.length === 7) {
+          weeks.push(week)
+          week = []
+        } else if (isLastDayInMonth) {
+          for (let i = 0; i < 7 - week.length; i++) {
+            week.push(weekDayNotInMonth)
+          }
+          weeks.push(week)
+          week = []
+        }
+      }
+      return weeks
+    },
+    selectDate(date) {
+      console.log('selectDate', date, date instanceof Date)
+      // date = date instanceof Date ? date : parseISO(date)
+      if (this.isBeforeMinDate(date) || this.isAfterEndDate(date) || this.isDateDisabled(date)) {
+        return
+      }
+
+      if (this.mode === 'single') {
+        this.selectedDate1 = date
+        this.closeDatepicker()
+        return
+      }
+
+      if (this.isSelectingDate1 || isBefore(parseISO(date), parseISO(this.selectedDate1))) {
+        this.selectedDate1 = date
+        this.isSelectingDate1 = false
+
+        if (isBefore(parseISO(this.selectedDate2), parseISO(date))) {
+          this.selectedDate2 = ''
+        }
+      } else {
+        this.selectedDate2 = date
+        this.isSelectingDate1 = true
+
+        if (isAfter(parseISO(this.selectedDate1), parseISO(date))) {
+          this.selectedDate1 = ''
+        } else if (this.showActionButtons) {
+          // if user has selected both dates, focus the apply button for accessibility
+          this.$refs['apply-button'].focus()
+        }
+
+        if (this.allDatesSelected && this.closeAfterSelect) {
+          this.closeDatepicker()
+        }
+      }
+    },
+    setHoverDate(date) {
+      this.hoverDate = date
+    },
+    setFocusedDate(date) {
+      const formattedDate = format(date, this.dateFormat)
+      this.focusedDate = formattedDate
+      const dateElement = this.$refs[`date-${formattedDate}`]
+      // handle .focus() on ie11 by adding a short timeout
+      if (dateElement && dateElement.length) {
+        setTimeout(function () {
+          dateElement[0].focus()
+        }, 10)
+      }
+    },
+    resetFocusedDate(setToFirst) {
+      if (this.focusedDate && !this.isDateVisible(this.focusedDate)) {
+        const visibleMonthIdx = setToFirst ? 0 : this.visibleMonths.length - 1
+        const targetMonth = this.visibleMonths[visibleMonthIdx]
+        const monthIdx = getMonth(targetMonth)
+        const year = getYear(targetMonth)
+        const newFocusedDate = setYear(setMonth(this.focusedDate, monthIdx), year)
+        this.focusedDate = format(newFocusedDate, this.dateFormat)
+      }
+    },
+    isToday(date) {
+      // console.log('isToday', date, format(new Date(), this.dateFormat) === date)
+      // date = date instanceof Date ? date : parseISO(date)
+      return format(new Date(), this.dateFormat) === date
+    },
+    isSameDate(date1, date2) {
+      date1 = date1 instanceof Date ? date1 : parseISO(date1)
+      date2 = date2 instanceof Date ? date2 : parseISO(date2)
+
+      return isSameDay(date1, date2)
+    },
+    isSelected(date) {
+      if (!date) {
+        return
+      }
+      return this.selectedDate1 === date || this.selectedDate2 === date
+    },
+    isInRange(date) {
+      if (!this.allDatesSelected || this.isSingleMode) {
+        return false
+      }
+      date = parseISO(date)
+      return (
+        (isAfter(date, parseISO(this.selectedDate1)) &&
+          isBefore(date, parseISO(this.selectedDate2))) ||
+        (isAfter(date, parseISO(this.selectedDate1)) &&
+          isBefore(date, parseISO(this.hoverDate)) &&
+          !this.allDatesSelected)
+      )
+    },
+    isHoveredInRange(date) {
+      if (this.isSingleMode || this.allDatesSelected) {
+        return false
+      }
+      date = parseISO(date)
+      return (
+        (isAfter(date, parseISO(this.selectedDate1)) && isBefore(date, parseISO(this.hoverDate))) ||
+        (isAfter(date, parseISO(this.hoverDate)) && isBefore(date, parseISO(this.selectedDate1)))
+      )
+    },
+    isBeforeMinDate(date) {
+      if (!this.minDate) {
+        return false
+      }
+      date = parseISO(date)
+      console.log('isBeforeMinDate', typeof date, this.minDate)
+      return isBefore(date, parseISO(this.minDate))
+    },
+    isAfterEndDate(date) {
+      if (!this.endDate) {
+        return false
+      }
+      return isAfter(date, this.endDate)
+    },
+    isDateVisible(date) {
+      if (!date) {
+        return false
+      }
+      date = parseISO(date)
+      const start = subDays(parseISO(this.visibleMonths[0]), 1)
+      const end = addDays(lastDayOfMonth(parseISO(this.visibleMonths[this.monthsToShow - 1])), 1)
+      return isAfter(date, start) && isBefore(date, end)
+    },
+    isDateDisabled(date) {
+      if (this.enabledDates.length > 0) {
+        return this.enabledDates.indexOf(date) === -1
+      } else {
+        return this.disabledDates.indexOf(date) > -1
+      }
+    },
+    customizedDateClass(date) {
+      var customizedClasses = ''
+      if (this.customizedDates.length > 0) {
+        for (var i = 0; i < this.customizedDates.length; i++) {
+          if (this.customizedDates[i].dates.indexOf(date) > -1)
+            customizedClasses += ` asd__day--${this.customizedDates[i].cssClass}`
+        }
+      }
+      return customizedClasses
+    },
+    isDisabled(date) {
+      // date = date instanceof Date ? date : parseISO(date)
+      // console.log('isDisabled', date)
+      // return false
+
+      return this.isDateDisabled(date) || this.isBeforeMinDate(date) || this.isAfterEndDate(date)
+    },
+    previousMonth() {
+      this.startingDate = this.subtractMonths(this.months[0].firstDateOfMonth)
+
+      this.months.unshift(this.getMonth(this.startingDate))
+      this.months.splice(this.months.length - 1, 1)
+      this.$emit('previous-month', this.visibleMonths)
+      this.resetFocusedDate(false)
+    },
+    nextMonth() {
+      this.startingDate = this.addMonths(this.months[this.months.length - 1].firstDateOfMonth)
+      this.months.push(this.getMonth(this.startingDate))
+      this.months.splice(0, 1)
+      this.$emit('next-month', this.visibleMonths)
+      this.resetFocusedDate(true)
+    },
+    subtractMonths(date) {
+      // console.log(
+      //   'subtractMonths',
+      //   date,
+      //   date = date instanceof Date ? date : parseISO(date)
+      //   // subMonths(date, 1),
+      //   // format(subMonths(date, 1), this.dateFormat)
+      // )
+      date = date instanceof Date ? date : parseISO(date)
+      // console.log('subtractMonths', date)
+      return format(subMonths(date, 1), this.dateFormat)
+    },
+    addMonths(date) {
+      date = parseISO(date)
+      return format(addMonths(date, 1), this.dateFormat)
+    },
+    toggleDatepicker() {
+      if (this.showDatepicker) {
+        this.closeDatepicker()
+      } else {
+        this.openDatepicker()
+      }
+    },
+    updateMonth(offset, year, event) {
+      const newMonth = event.target.value
+      const monthIdx = this.monthNames.indexOf(newMonth)
+      const newDate = setYear(setMonth(this.startingDate, monthIdx), year)
+      this.startingDate = subMonths(newDate, offset)
+      this.generateMonths()
+    },
+    updateYear(offset, monthIdx, event) {
+      const newYear = event.target.value
+      const newDate = setYear(setMonth(this.startingDate, monthIdx), newYear)
+      this.startingDate = subMonths(newDate, offset)
+      this.generateMonths()
+    },
+    openDatepicker() {
+      this.positionDatepicker()
+      this.setStartDates()
+      this.triggerElement.classList.add('datepicker-open')
+      this.showDatepicker = true
+      this.initialDate1 = this.dateOne
+      this.initialDate2 = this.dateTwo
+      console.log('openDatepicker', this.dateTwo)
+      this.$emit('opened')
+      this.$nextTick(() => {
+        if (!this.inline) this.setFocusedDate(this.focusedDate)
+      })
+    },
+    closeDatepickerCancel() {
+      if (this.showDatepicker) {
+        this.selectedDate1 = this.initialDate1
+        this.selectedDate2 = this.initialDate2
+        this.$emit('cancelled')
+        this.closeDatepicker()
+      }
+    },
+    closeDatepicker() {
+      if (this.inline) {
+        return
+      }
+      this.showDatepicker = false
+      this.showKeyboardShortcutsMenu = false
+      this.triggerElement.classList.remove('datepicker-open')
+      this.$emit('closed')
+    },
+    openKeyboardShortcutsMenu() {
+      this.showKeyboardShortcutsMenu = true
+      const shortcutMenuCloseBtn = this.$refs['keyboard-shortcus-menu-close']
+      this.$nextTick(() => shortcutMenuCloseBtn.focus())
+    },
+    closeKeyboardShortcutsMenu() {
+      this.showKeyboardShortcutsMenu = false
+      this.$nextTick(() => this.setFocusedDate(this.focusedDate))
+    },
+    apply() {
+      this.$emit('apply')
+      this.closeDatepicker()
     },
     positionDatepicker() {
       const triggerWrapperElement = findAncestor(this.triggerElement, '.datepicker-trigger')
@@ -825,24 +1179,6 @@ export default {
         this.alignRight = rightPosition > viewportWidth
       })
     },
-
-    setHoverDate(date) {
-      // console.log('setHoverDate', date)
-      date = parseISO(date)
-      this.hoverDate = date
-    },
-    // setStyles
-    // setFocusedDate(date) {
-    //   // const formattedDate = format(date, this.dateFormat)
-    //   // this.focusedDate = formattedDate
-    //   // const dateElement = this.$refs[`date-${formattedDate}`]
-    //   // // handle .focus() on ie11 by adding a short timeout
-    //   // if (dateElement && dateElement.length) {
-    //   //   setTimeout(function () {
-    //   //     dateElement[0].focus()
-    //   //   }, 10)
-    //   // }
-    // },
   },
 }
 </script>

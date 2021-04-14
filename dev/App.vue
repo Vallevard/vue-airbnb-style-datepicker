@@ -7,9 +7,42 @@
       <button @click="toggleTrigger">Toggle trigger</button>
     </div>
     <div v-if="showDatepickers">
+      <div class="datepicker-container with-input">
+        <h3>Range datepicker with input</h3>
+        <div class="datepicker-trigger">
+          <input
+            type="text"
+            id="datepicker-input-trigger"
+            :value="formatDates(inputDateOne, inputDateTwo)"
+            placeholder="Select dates"
+          />
+          <!--  :min-date="'2018-08-28'" -->
+
+          <airbnb-style-datepicker
+            :trigger-element-id="'datepicker-input-trigger'"
+            :mode="'range'"
+            :date-one="inputDateOne"
+            :date-two="inputDateTwo"
+            :months-to-show="2"
+            :show-action-buttons="true"
+            :show-month-year-select="true"
+            @date-one-selected="
+              val => {
+                inputDateOne = val
+              }
+            "
+            @date-two-selected="
+              val => {
+                inputDateTwo = val
+              }
+            "
+          />
+        </div>
+      </div>
+
       <div class="datepicker-container single-with-input">
         <h3>Single datepicker with input</h3>
-        <div class="datepicker-trigger">
+        <!-- <div class="datepicker-trigger">
           <input
             type="text"
             id="datepicker-input-single-trigger"
@@ -30,7 +63,8 @@
             "
             :inline="true"
           />
-        </div>
+        </div> -->
+        <!-- ./ -->
       </div>
     </div>
   </div>
@@ -40,6 +74,7 @@
 /* eslint-disable */
 import format from 'date-fns/format'
 import parseISO from 'date-fns/parseISO'
+import { isSameDay } from 'date-fns'
 
 export default {
   data() {
@@ -63,17 +98,19 @@ export default {
   },
   computed: {
     disabledDates() {
-      return [new Date('2018-12-30'), new Date('2018-12-10'), new Date('2018-12-14')]
+      return ['2018-12-30', '2018-12-10', '2018-12-14']
     },
   },
   created() {
-    setTimeout(() => {
-      this.inputDateOne = new Date('2019-01-12')
-      // this.inputDateTwo = ''
-    }, 5000)
+    // setTimeout(() => {
+    //   this.inputDateOne = '2019-01-12'
+    //   // this.inputDateTwo = null
+    // }, 3000)
   },
   methods: {
     formatDates(dateOne, dateTwo) {
+      console.log('APP ignore formatDates', dateOne, dateTwo)
+      // console.log(isSameDay(parseISO(dateOne), dateTwo))
       let formattedDates = ''
       if (dateOne) {
         formattedDates = format(parseISO(dateOne), this.dateFormat)
