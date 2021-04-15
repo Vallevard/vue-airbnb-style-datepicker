@@ -1041,7 +1041,7 @@ export default {
       return format(subMonths(date, 1), this.dateFormat)
     },
     addMonths(date) {
-      date = parseISO(date)
+      date = date instanceof Date ? date : parseISO(date)
       return format(addMonths(date, 1), this.dateFormat)
     },
     toggleDatepicker() {
