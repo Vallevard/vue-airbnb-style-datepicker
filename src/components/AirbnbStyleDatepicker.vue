@@ -826,7 +826,7 @@ export default {
       this.daysShort.unshift(lastDayShort)
     },
     getMonth(date) {
-      date = parseISO(date)
+      date = date instanceof Date ? date : parseISO(date)
       const firstDateOfMonth = format(date, 'yyyy-MM-01')
       const year = format(date, 'yyyy')
       const monthNumber = parseInt(format(date, 'M'))
@@ -841,7 +841,7 @@ export default {
       }
     },
     getWeeks(date) {
-      date = parseISO(date)
+      date = date instanceof Date ? date : parseISO(date)
       const weekDayNotInMonth = { dayNumber: 0 }
       const daysInMonth = getDaysInMonth(date)
       const year = format(date, 'yyyy')
@@ -1054,13 +1054,18 @@ export default {
     updateMonth(offset, year, event) {
       const newMonth = event.target.value
       const monthIdx = this.monthNames.indexOf(newMonth)
-      const newDate = setYear(setMonth(this.startingDate, monthIdx), year)
+      const startingDateParsed =
+        this.startingDate instanceof Date ? this.startingDate : parseISO(this.startingDate)
+      const newDate = setYear(setMonth(startingDateParsed, monthIdx), year)
+      console.log(newDate, typeof newDate)
       this.startingDate = subMonths(newDate, offset)
       this.generateMonths()
     },
     updateYear(offset, monthIdx, event) {
       const newYear = event.target.value
-      const newDate = setYear(setMonth(this.startingDate, monthIdx), newYear)
+      const startingDateParsed =
+        this.startingDate instanceof Date ? this.startingDate : parseISO(this.startingDate)
+      const newDate = setYear(setMonth(startingDateParsed, monthIdx), newYear)
       this.startingDate = subMonths(newDate, offset)
       this.generateMonths()
     },
