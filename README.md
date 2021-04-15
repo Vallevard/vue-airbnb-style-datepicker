@@ -1,3 +1,4 @@
+# vue 2 + date-fns version 2
 # vue-airbnb-style-datepicker
 
 This is a VueJs version of the popular AirBnb datepicker. Supports range selection, disabling of dates, custom configuration, and many more things. Really lightweight and good browser support!<br>

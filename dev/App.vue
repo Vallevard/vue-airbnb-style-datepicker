@@ -16,13 +16,13 @@
             :value="formatDates(inputDateOne, inputDateTwo)"
             placeholder="Select dates"
           />
-          <!--  :min-date="'2018-08-28'" -->
 
           <airbnb-style-datepicker
             :trigger-element-id="'datepicker-input-trigger'"
             :mode="'range'"
             :date-one="inputDateOne"
             :date-two="inputDateTwo"
+            :min-date="'2018-08-28'"
             :months-to-show="2"
             :show-action-buttons="true"
             :show-month-year-select="true"
@@ -42,7 +42,7 @@
 
       <div class="datepicker-container single-with-input">
         <h3>Single datepicker with input</h3>
-        <!-- <div class="datepicker-trigger">
+        <div class="datepicker-trigger">
           <input
             type="text"
             id="datepicker-input-single-trigger"
@@ -55,17 +55,137 @@
             :mode="'single'"
             :date-one="inputSingleDateOne"
             :date-two="inputSingleDateTwo"
-            :data-start-open="true"
             @date-one-selected="
               val => {
                 inputSingleDateOne = val
               }
             "
-            :inline="true"
           />
-        </div> -->
-        <!-- ./ -->
+        </div>
       </div>
+
+      <div class="datepicker-container with-button">
+        <h3>Range datepicker with button</h3>
+        <div class="datepicker-trigger">
+          <button id="datepicker-button-trigger">
+            {{ formatDates(buttonDateOne, buttonDateTwo) || 'Select dates' }}
+          </button>
+
+          <airbnb-style-datepicker
+            :trigger-element-id="'datepicker-button-trigger'"
+            :mode="'range'"
+            :date-one="buttonDateOne"
+            :date-two="buttonDateTwo"
+            :min-date="'2018-04-18'"
+            :fullscreen-mobile="true"
+            :months-to-show="2"
+            :trigger="trigger"
+            :offset-y="10"
+            :close-after-select="true"
+            @date-one-selected="
+              val => {
+                buttonDateOne = val
+              }
+            "
+            @date-two-selected="
+              val => {
+                buttonDateTwo = val
+                trigger = false
+              }
+            "
+          />
+        </div>
+      </div>
+
+      <div class="datepicker-container inline-with-input">
+        <h3>Inline datepicker with input</h3>
+        <input
+          id="datepicker-inline-trigger"
+          :value="formatDates(inlineDateOne)"
+          type="text"
+          placeholder="Select date"
+        />
+        <airbnb-style-datepicker
+          :trigger-element-id="'datepicker-inline-trigger'"
+          :mode="'single'"
+          :inline="true"
+          :fullscreen-mobile="false"
+          :date-one="inlineDateOne"
+          :months-to-show="2"
+          :disabled-dates="['2018-04-30', '2018-05-10', '2018-12-14']"
+          :customized-dates="[
+            { dates: ['2019-03-21', '2019-03-22', '2019-03-23', '2019-03-24'], cssClass: 'booked' },
+            {
+              dates: ['2019-03-21', '2019-03-22', '2019-03-23', '2019-04-24'],
+              cssClass: 'not-available',
+            },
+          ]"
+          @date-one-selected="
+            val => {
+              inlineDateOne = val
+            }
+          "
+        />
+      </div>
+
+      <div class="datepicker-container inline-with-input">
+        <h3>Inline datepicker with disabled dates</h3>
+        <input
+          id="datepicker-disabled-dates-trigger"
+          :value="formatDates(withDisabledDatesDateOne)"
+          type="text"
+          placeholder="Select date"
+        />
+        <airbnb-style-datepicker
+          :trigger-element-id="'datepicker-disabled-dates-trigger'"
+          :mode="'single'"
+          :inline="true"
+          :date-one="withDisabledDatesDateOne"
+          :months-to-show="2"
+          :disabled-dates="disabledDates"
+          @date-one-selected="
+            val => {
+              withDisabledDatesDateOne = val
+            }
+          "
+        />
+      </div>
+
+      <div class="datepicker-container with-button">
+        <h3>Test callback methods</h3>
+        <div class="datepicker-trigger">
+          <button id="datepicker-callback-trigger">
+            {{ formatDates(callbackDateOne, callbackDateTwo) || 'Select dates' }}
+          </button>
+
+          <airbnb-style-datepicker
+            :trigger-element-id="'datepicker-callback-trigger'"
+            :mode="'range'"
+            :date-one="callbackDateOne"
+            :date-two="callbackDateTwo"
+            :fullscreen-mobile="true"
+            :months-to-show="2"
+            :offset-y="10"
+            @date-one-selected="
+              val => {
+                callbackDateOne = val
+              }
+            "
+            @date-two-selected="
+              val => {
+                callbackDateTwo = val
+              }
+            "
+            @apply="applyMethod"
+            @closed="closedMethod"
+            @cancelled="cancelledMethod"
+            @opened="openedMethod"
+            @previous-month="changeMonthMethod"
+            @next-month="changeMonthMethod"
+          />
+        </div>
+      </div>
+      <!-- -->
     </div>
   </div>
 </template>
@@ -94,23 +214,23 @@ export default {
       alignRight: false,
       showDatepickers: true,
       trigger: false,
+      today: null,
     }
   },
   computed: {
     disabledDates() {
-      return ['2018-12-30', '2018-12-10', '2018-12-14']
+      return ['2021-04-30', '2021-04-10', '2021-04-14']
     },
   },
   created() {
-    // setTimeout(() => {
-    //   this.inputDateOne = '2019-01-12'
-    //   // this.inputDateTwo = null
-    // }, 3000)
+    setTimeout(() => {
+      this.inputDateOne = '2019-01-12'
+      // this.inputDateTwo = null
+    }, 3000)
   },
   methods: {
     formatDates(dateOne, dateTwo) {
       console.log('APP ignore formatDates', dateOne, dateTwo)
-      // console.log(isSameDay(parseISO(dateOne), dateTwo))
       let formattedDates = ''
       if (dateOne) {
         formattedDates = format(parseISO(dateOne), this.dateFormat)

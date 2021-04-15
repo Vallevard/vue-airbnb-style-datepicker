@@ -129,23 +129,16 @@
                         'asd__selected-date-one': fullDate && fullDate === selectedDate1,
                         'asd__selected-date-two': fullDate && fullDate === selectedDate2,
                       },
-                      //customizedDateClass(fullDate),
+                      customizedDateClass(fullDate),
                     ]"
-                  >
-                    <!-- 
-                    
-                    
-                        
-                        
-                        
-                        
                     :style="getDayStyles(fullDate)"
                     @mouseover="
                       () => {
                         setHoverDate(fullDate)
                       }
                     "
-                  -->
+                  >
+                    <!-- -->
                     <button
                       class="asd__day-button"
                       type="button"
@@ -457,7 +450,6 @@ export default {
       return this.width * this.showMonths
     },
     datePropsCompound() {
-      console.log('datePropsCompound', this.dateOne, this.dateTwo)
       // used to watch for changes in props, and update GUI accordingly
       return this.dateTwo ? this.dateOne + this.dateTwo : this.dateOne
     },
@@ -465,7 +457,7 @@ export default {
       if (!this.dateTwo) {
         return false
       }
-      console.log('isDateTwoBeforeDateOne', this.dateTwo)
+
       return isBefore(parseISO(this.dateTwo), parseISO(this.dateOne))
     },
     visibleMonths() {
@@ -498,7 +490,6 @@ export default {
       this.generateYears()
     },
     datePropsCompound(newValue) {
-      console.log('datePropsCompound watch', newValue, this.dateTwo)
       if (this.dateOne !== this.selectedDate1) {
         this.startingDate = this.dateOne
         this.setStartDates()
@@ -608,26 +599,16 @@ export default {
       const isDisabled = this.isDisabled(date)
 
       if (isDisabled) {
-        console.log('getAriaLabelForDate - isDisabled')
         return this.ariaLabels.unavailableDate(dateLabel)
       }
 
       const isSelected = this.isSelected(date)
 
       if (isSelected) {
-        console.log('getAriaLabelForDate - isSelected')
         return this.ariaLabels.selectedDate(dateLabel)
       }
-      // console.log(
-      //   'getAriaLabelForDate',
-      //   dateLabel,
-      //   isDisabled,
-      //   isSelected,
-      //   this.isRangeMode,
-      //   this.ariaLabels.chooseDate(dateLabel)
-      // )
+
       if (this.isRangeMode) {
-        console.log('getAriaLabelForDate - isRangeMode')
         if (this.isSelectingDate1) {
           return this.ariaLabels.chooseStartDate(dateLabel)
         } else {
@@ -752,18 +733,17 @@ export default {
       ) {
         return
       }
-
-      console.log('subMonths', subMonths(formattedDate, 1))
       this.startingDate = subMonths(formattedDate, 1)
-      // this.generateMonths()
-      // this.generateYears()
-      // this.selectDate(formattedDate)
     },
     isMonthDisabled(year, monthIndex) {
       const monthDate = new Date(year, monthIndex)
-      if (this.hasMinDate && isBefore(monthDate, startOfMonth(this.minDate))) {
-        return true
-      }
+      if (this.minDate)
+        if (
+          this.hasMinDate &&
+          isBefore(parseISO(monthDate), startOfMonth(parseISO(this.minDate)))
+        ) {
+          return true
+        }
       return this.isAfterEndDate(monthDate)
     },
     generateMonths() {
@@ -779,7 +759,7 @@ export default {
       this.years = []
       const currentYear = getYear(parseISO(this.startingDate))
       const startYear = this.minDate
-        ? getYear(pareseISO(this.minDate))
+        ? getYear(parseISO(this.minDate))
         : currentYear - this.yearsForSelect
       const endYear = this.endDate
         ? getYear(parseISO(this.endDate))
@@ -828,13 +808,6 @@ export default {
     },
     setStartDates() {
       let startDate = this.dateOne || new Date()
-
-      console.log(
-        'setStartDates',
-        typeof startDate,
-        this.minDate
-        // isBefore(startDate, this.minDate)
-      )
 
       if (this.minDate)
         if (this.hasMinDate && isBefore(parseISO(startDate), parseISO(this.minDate))) {
@@ -908,8 +881,6 @@ export default {
       return weeks
     },
     selectDate(date) {
-      console.log('selectDate', date, date instanceof Date)
-      // date = date instanceof Date ? date : parseISO(date)
       if (this.isBeforeMinDate(date) || this.isAfterEndDate(date) || this.isDateDisabled(date)) {
         return
       }
@@ -947,6 +918,7 @@ export default {
       this.hoverDate = date
     },
     setFocusedDate(date) {
+      date = date instanceof Date ? date : parseISO(date)
       const formattedDate = format(date, this.dateFormat)
       this.focusedDate = formattedDate
       const dateElement = this.$refs[`date-${formattedDate}`]
@@ -961,15 +933,15 @@ export default {
       if (this.focusedDate && !this.isDateVisible(this.focusedDate)) {
         const visibleMonthIdx = setToFirst ? 0 : this.visibleMonths.length - 1
         const targetMonth = this.visibleMonths[visibleMonthIdx]
-        const monthIdx = getMonth(targetMonth)
-        const year = getYear(targetMonth)
-        const newFocusedDate = setYear(setMonth(this.focusedDate, monthIdx), year)
+        const monthIdx = getMonth(parseISO(targetMonth))
+        const year = getYear(parseISO(targetMonth))
+        const focusedDateParsed =
+          this.focusedDate instanceof Date ? this.focusedDate : parseISO(this.focusedDate)
+        const newFocusedDate = setYear(setMonth(focusedDateParsed, monthIdx), year)
         this.focusedDate = format(newFocusedDate, this.dateFormat)
       }
     },
     isToday(date) {
-      // console.log('isToday', date, format(new Date(), this.dateFormat) === date)
-      // date = date instanceof Date ? date : parseISO(date)
       return format(new Date(), this.dateFormat) === date
     },
     isSameDate(date1, date2) {
@@ -1012,7 +984,6 @@ export default {
         return false
       }
       date = parseISO(date)
-      console.log('isBeforeMinDate', typeof date, this.minDate)
       return isBefore(date, parseISO(this.minDate))
     },
     isAfterEndDate(date) {
@@ -1048,10 +1019,6 @@ export default {
       return customizedClasses
     },
     isDisabled(date) {
-      // date = date instanceof Date ? date : parseISO(date)
-      // console.log('isDisabled', date)
-      // return false
-
       return this.isDateDisabled(date) || this.isBeforeMinDate(date) || this.isAfterEndDate(date)
     },
     previousMonth() {
@@ -1070,15 +1037,7 @@ export default {
       this.resetFocusedDate(true)
     },
     subtractMonths(date) {
-      // console.log(
-      //   'subtractMonths',
-      //   date,
-      //   date = date instanceof Date ? date : parseISO(date)
-      //   // subMonths(date, 1),
-      //   // format(subMonths(date, 1), this.dateFormat)
-      // )
       date = date instanceof Date ? date : parseISO(date)
-      // console.log('subtractMonths', date)
       return format(subMonths(date, 1), this.dateFormat)
     },
     addMonths(date) {
@@ -1112,7 +1071,7 @@ export default {
       this.showDatepicker = true
       this.initialDate1 = this.dateOne
       this.initialDate2 = this.dateTwo
-      console.log('openDatepicker', this.dateTwo)
+
       this.$emit('opened')
       this.$nextTick(() => {
         if (!this.inline) this.setFocusedDate(this.focusedDate)
